@@ -1,0 +1,145 @@
+<!doctype html>
+<html class="no-js" lang="">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <title></title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <link rel="apple-touch-icon" href="apple-touch-icon.png">
+        <!-- Place favicon.ico in the root directory -->
+
+        <link rel="stylesheet" href="css/main.css">
+        <script src="js/vendor/modernizr-2.8.3.min.js"></script>
+        <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css" />
+    </head>
+    <body>
+        <!--[if lt IE 8]>
+            <p class="browserupgrade">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
+        <![endif]-->
+
+        <div style="height: 100vh;" id="leafletMap"></div>
+
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
+        <script src="js/plugins.js"></script>
+        <script src="js/main.js"></script>
+        <script src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"></script>
+        <script src="js/Leaflet.MapboxVectorTile.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.4.9/d3.min.js"></script>
+        <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+        <script src="http://d3js.org/d3.geo.projection.v0.min.js" charset="utf-8"></script>
+        <script src="http://d3js.org/topojson.v1.min.js"></script>
+        <script src="js/fullcanvas.js"></script>
+
+        <script>
+        $(document).ready(function() {
+
+            var myMap = L.map('leafletMap').setView([51.505, -0.09], 13);
+
+            L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
+                attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
+                maxZoom: 18,
+                id: 'willcj33.0e19nk6o',
+                accessToken: 'pk.eyJ1Ijoid2lsbGNqMzMiLCJhIjoiY2lwajN3dHZuMDF0dXU5bmpteTdveTZ4MSJ9.SIHmAiPRZ8TwXdqkXm_XfA'
+            }).addTo(myMap);
+
+            var myLayer = L.FullCanvas.extend({
+
+                //over riding the clickedPoints function
+                clickedPoints: function(points){
+                   // var text = "You clicked on the point Latitude["+ points[0].data.slat + "] Longitude["+ points[0].data.slon + "]";
+                    //show your popup
+                    alert('cool');
+                },
+                drawCanvas: function() {
+                },
+
+                customDrawCanvas: function(sourceCanvas, point) {
+                    var self = this;
+                    var canvas = self.getCanvas();
+                    var ctx = canvas.getContext('2d');
+                    var newPoint = self._myMap.layerPointToContainerPoint(point);
+                    ctx.drawImage(sourceCanvas, Math.round(newPoint.x - 13.5), Math.round(newPoint.y - 35));
+                    //ctx.restore();
+                }
+            });
+
+            var myActualLayer = new myLayer();
+
+            var mvtSource = new L.TileLayer.MVTSource({
+                async: true,
+                tileSize: 256,
+                url: "http://{s}.localhost:4000/instagram/{z}/{x}/{y}.pbf",
+                subDomains: ['a','b','c','d', 'e', 'f', 'g', 'h'],
+                debug: false,
+                masterLayer: myActualLayer,
+                clickableLayers: ["layer"],
+                getIDForLayerFeature: function(feature) {
+                    return feature.properties.id;
+                },
+
+
+                filter: function(feature, context) {
+                    if (feature.layer.name === 'layer') {
+                        return true;
+                    }
+                    return false;
+                },
+
+                style: function (feature) {
+                    var style = {};
+
+                    var type = feature.type;
+                    switch (type) {
+                        case 1: //'Point'
+                            style.color = 'rgba(49,79,79,1)';
+                            style.radius = 10;
+                            style.selected = {
+                                color: 'rgba(255,255,0,0.5)',
+                                radius: 10
+                            };
+                            break;
+                        case 2: //'LineString'
+                            style.color = 'rgba(161,217,155,0.8)';
+                            style.size = 3;
+                            style.selected = {
+                                color: 'rgba(255,25,0,0.5)',
+                                size: 4
+                            };
+                            break;
+                        case 3: //'Polygon'
+                            style.color = fillColor;
+                            style.outline = {
+                                color: strokeColor,
+                                size: 1
+                            };
+                            style.selected = {
+                                color: 'rgba(255,140,0,0.3)',
+                                outline: {
+                                    color: 'rgba(255,140,0,1)',
+                                    size: 2
+                                }
+                            };
+                            break;
+                    }
+                    return style;
+                },
+                onClick: function(evt) {
+                    console.log(evt);
+                }
+
+            });
+            //debug.mvtSource = mvtSource;
+
+//Globals that we can change later.
+            var fillColor = 'rgba(149,139,255,0.4)';
+            var strokeColor = 'rgb(20,20,20)';
+
+
+            myMap.addLayer(mvtSource);
+            myMap.addLayer(myActualLayer);
+
+        }); </script>
+    </body>
+</html>
